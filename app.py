@@ -10,6 +10,7 @@ import csv
 import time
 import tempfile
 import shutil
+import urllib.request
 from collections import defaultdict, deque
 from pathlib import Path
 import threading
@@ -241,27 +242,21 @@ def load_model(model_name, device):
         from ultralytics import YOLO
         return YOLO(model_name)
 
-def ensure_ytdlp():
-    try:
-        subprocess.run(["yt-dlp","--version"],capture_output=True,check=True)
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        subprocess.run([sys.executable,"-m","pip","install","yt-dlp","-q"],check=True)
+def get_video_source(uploaded_file, url, out_path, log_fn=None):
+    if uploaded_file is not None:
+        if log_fn: log_fn("📂 Using uploaded video...")
+        with open(out_path, "wb") as f:
+            f.write(uploaded_file.read())
+        return True
 
-def download_video(url, out_path, log_fn=None):
-    if log_fn: log_fn("⬇️ Downloading video...")
+    if url and url.strip():
+        clean_url = url.strip()
+        if clean_url.lower().split("?")[0].endswith(".mp4"):
+            if log_fn: log_fn("⬇️ Downloading direct MP4 link...")
+            urllib.request.urlretrieve(clean_url, out_path)
+            return True
 
-    result = subprocess.run(
-        [sys.executable, "-m", "yt_dlp", url,
-         "-f", "best[ext=mp4]",
-         "-o", out_path,
-         "--no-playlist"],
-        capture_output=True, text=True
-    )
-
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr)
-
-    if log_fn: log_fn("✅ Download complete")
+    return False
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -466,30 +461,35 @@ with st.sidebar:
 st.markdown("""
 <div class="title-banner">
   <h1>🏆 Sports Multi-Object Tracker</h1>
-  <p>Paste any public sports video URL → get annotated output, heatmap, trajectories &amp; bird's-eye view</p>
+  <p>Upload video or paste a direct MP4 link → get annotated output, heatmap, trajectories &amp; bird's-eye view</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ── URL input ────────────────────────────────────────────────────────────────
+st.markdown("### 📥 Input Video")
 col_url, col_btn = st.columns([5,1])
 with col_url:
+    uploaded_file = st.file_uploader(
+        "Upload video",
+        type=["mp4", "avi", "mov"]
+    )
     video_url = st.text_input(
-        "Video URL",
-        placeholder="https://www.youtube.com/watch?v=...   or any direct .mp4 link",
+        "Or paste direct MP4 link",
+        placeholder="https://example.com/video.mp4",
         label_visibility="collapsed",
     )
 with col_btn:
     run_clicked = st.button("▶  Run", use_container_width=True)
 
-st.caption("Works with YouTube, Vimeo, Wikimedia, direct MP4 links, and [250+ other sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) via yt-dlp")
+st.caption("Upload a local video file or use a direct MP4 link.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PIPELINE EXECUTION
 # ══════════════════════════════════════════════════════════════════════════════
 if run_clicked:
-    if not video_url.strip():
-        st.warning("Please enter a video URL first.")
+    if uploaded_file is None and not video_url.strip():
+        st.warning("Please upload a video or provide a direct MP4 link first.")
         st.stop()
 
     cfg = {
@@ -537,9 +537,12 @@ if run_clicked:
         </div>""", unsafe_allow_html=True)
 
     try:
-        # Step 1 — Download
-        status_box.markdown('<span class="badge badge-running">⏳ Downloading video…</span>', unsafe_allow_html=True)
-        download_video(video_url, vid_path, log_fn=log)
+        # Step 1 — Load video from upload or direct MP4 link
+        status_box.markdown('<span class="badge badge-running">⏳ Preparing video…</span>', unsafe_allow_html=True)
+        success = get_video_source(uploaded_file, video_url, vid_path, log_fn=log)
+
+        if not success:
+            raise RuntimeError("❌ Invalid input. Upload a video or use a direct MP4 link.")
 
         # Step 2 — Load model
         status_box.markdown('<span class="badge badge-running">⏳ Loading model…</span>', unsafe_allow_html=True)
