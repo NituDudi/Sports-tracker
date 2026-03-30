@@ -5,3 +5,4 @@ numpy
 yt-dlp
 pandas
 matplotlib
+torch==2.5.1
