@@ -1,8 +1,8 @@
-streamlit>=1.35.0
-ultralytics>=8.2.0
+streamlit
+ultralytics
 opencv-python-headless==4.10.0.84
-numpy==1.26.4
-pandas>=2.0.0
-matplotlib>=3.8.0
+numpy
+pandas
+matplotlib
 torch==2.5.1
 lapx>=0.5.2
