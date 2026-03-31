@@ -5,7 +5,7 @@ A Streamlit application for multi-object detection and persistent ID tracking in
 - **Source:** [YouTube](https://www.youtube.com/watch?v=vuCTH7jjPnw)
 ## 🌐 Live Demo
 You can view the deployed project here:
-- 🔗 [Live Host Link](YOUR_LIVE_LINK_HERE)
+- 🔗 [Live Host Link](https://nitu-dudi-sports-tracker-saotmveg7ec4egjpazbhyp.streamlit.app)
 ## Features
 
 - Upload a local video file (`.mp4`, `.avi`, `.mov`) or paste a direct `.mp4` link
