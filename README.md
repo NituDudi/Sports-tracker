@@ -1,4 +1,7 @@
 # 🏆 Sports Tracker — Streamlit App
+## 🎥 Video Source
+- **Title:** Soccer Match Clip  
+- **Source:** [YouTube](https://www.youtube.com/watch?v=vuCTH7jjPnw)
 
 A Streamlit application for multi-object detection and persistent ID tracking in sports or event footage.
 
